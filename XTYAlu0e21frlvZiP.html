@@ -1,0 +1,147 @@
+<html><head><base href="https://websim.ai/linear-regression/"></head><body>
+<h1>Linear Regression Simulator</h1>
+
+<div id="app">
+    <div id="controls">
+        <label for="a">a (slope): </label>
+        <input type="range" id="a" min="-10" max="10" step="0.1" value="1">
+        <span id="a-value">1</span><br>
+
+        <label for="n">n (number of points): </label>
+        <input type="range" id="n" min="100" max="1000" step="10" value="500">
+        <span id="n-value">500</span><br>
+
+        <label for="c">c (noise factor): </label>
+        <input type="range" id="c" min="1" max="300" step="1" value="50">
+        <span id="c-value">50</span><br>
+
+        <button id="generate">Generate Data</button>
+    </div>
+    <div id="plot"></div>
+</div>
+
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/numeric/1.2.6/numeric.min.js"></script>
+
+<script>
+// Helper function to generate random normal numbers
+function randn_bm() {
+    let u = 0, v = 0;
+    while(u === 0) u = Math.random();
+    while(v === 0) v = Math.random();
+    return Math.sqrt( -2.0 * Math.log( u ) ) * Math.cos( 2.0 * Math.PI * v );
+}
+
+function generateData(a, n, c) {
+    let x = [], y = [];
+    for (let i = 0; i < n; i++) {
+        let xi = Math.random() * 200 - 100;
+        let yi = a * xi + 50 + c * randn_bm();
+        x.push(xi);
+        y.push(yi);
+    }
+    return [x, y];
+}
+
+function linearRegression(x, y) {
+    let sum_x = 0, sum_y = 0, sum_xy = 0, sum_xx = 0;
+    let n = x.length;
+    
+    for (let i = 0; i < n; i++) {
+        sum_x += x[i];
+        sum_y += y[i];
+        sum_xy += x[i] * y[i];
+        sum_xx += x[i] * x[i];
+    }
+    
+    let slope = (n * sum_xy - sum_x * sum_y) / (n * sum_xx - sum_x * sum_x);
+    let intercept = (sum_y - slope * sum_x) / n;
+    
+    return [slope, intercept];
+}
+
+function updatePlot() {
+    let a = parseFloat(document.getElementById('a').value);
+    let n = parseInt(document.getElementById('n').value);
+    let c = parseFloat(document.getElementById('c').value);
+
+    document.getElementById('a-value').textContent = a.toFixed(2);
+    document.getElementById('n-value').textContent = n;
+    document.getElementById('c-value').textContent = c;
+
+    let [x, y] = generateData(a, n, c);
+    let [slope, intercept] = linearRegression(x, y);
+
+    let trace1 = {
+        x: x,
+        y: y,
+        mode: 'markers',
+        type: 'scatter',
+        name: 'Data'
+    };
+
+    let line_x = [-100, 100];
+    let line_y = line_x.map(xi => slope * xi + intercept);
+
+    let trace2 = {
+        x: line_x,
+        y: line_y,
+        mode: 'lines',
+        type: 'scatter',
+        name: 'Regression Line',
+        line: {color: 'red'}
+    };
+
+    let layout = {
+        title: 'Linear Regression',
+        xaxis: {title: 'X'},
+        yaxis: {title: 'Y'}
+    };
+
+    Plotly.newPlot('plot', [trace1, trace2], layout);
+}
+
+document.getElementById('generate').addEventListener('click', updatePlot);
+document.getElementById('a').addEventListener('input', updatePlot);
+document.getElementById('n').addEventListener('input', updatePlot);
+document.getElementById('c').addEventListener('input', updatePlot);
+
+updatePlot();  // Initial plot
+</script>
+
+<style>
+body {
+    font-family: Arial, sans-serif;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+h1 {
+    color: #333;
+}
+
+#controls {
+    margin-bottom: 20px;
+}
+
+label {
+    display: inline-block;
+    width: 150px;
+}
+
+input[type="range"] {
+    width: 300px;
+}
+
+button {
+    margin-top: 10px;
+    padding: 5px 10px;
+}
+
+#plot {
+    width: 100%;
+    height: 500px;
+}
+</style>
+</body></html>
